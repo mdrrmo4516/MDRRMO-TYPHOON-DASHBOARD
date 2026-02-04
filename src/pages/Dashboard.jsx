@@ -557,57 +557,6 @@ export default function Dashboard() {
       fileInputRef.current.value = "";
     }
   }, [typhoons.length]);
-            } else {
-              // Remove surrounding quotes if present
-              point[header] = value.replace(/^"(.*)"$/, '$1').replace(/""/g, '"');
-            }
-          });
-
-          // Ensure backward compatibility - map new fields to old fields
-          if (isNewFormat) {
-            point.lat = point.coordinate_latitude || point.lat || 0;
-            point.lon = point.coordinate_longitude || point.lon || 0;
-            point.category = point.typhoon_category || point.category || "tropical-storm";
-            if (!point.datetime && point.as_of_date && point.as_of_time) {
-              point.datetime = `${point.as_of_date} ${point.as_of_time}`;
-            }
-          } else {
-            // Old format - ensure new fields exist
-            point.coordinate_latitude = point.lat;
-            point.coordinate_longitude = point.lon;
-            point.typhoon_category = point.category;
-          }
-
-          newPoints.push(point);
-        }
-
-        if (newPoints.length === 0) {
-          throw new Error("No valid data found in CSV file");
-        }
-
-        // Overwrite all tracking points
-        setTrackingPoints(newPoints);
-        // Reset to last page to show most recent data
-        const newTotalPages = Math.ceil(newPoints.length / itemsPerPage);
-        setCurrentPage(newTotalPages > 0 ? newTotalPages : 1);
-        toast.success(`Successfully imported ${newPoints.length} tracking points (all previous data overwritten)`);
-      } catch (error) {
-        console.error("Import error:", error);
-        toast.error(error.message || "Failed to import CSV file");
-      }
-    };
-
-    reader.onerror = () => {
-      toast.error("Failed to read CSV file");
-    };
-
-    reader.readAsText(file);
-    
-    // Reset file input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  }, []);
 
   // Trigger file input click
   const handleImportClick = useCallback(() => {
