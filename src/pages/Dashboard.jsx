@@ -428,7 +428,8 @@ export default function Dashboard() {
         // Get headers and validate
         const headers = lines[0].split(",").map((h) => h.trim());
         
-        // Support both old and new format
+        // Check if this is a multi-typhoon export
+        const isMultiTyphoonFormat = headers.includes("typhoon_id") && headers.includes("typhoon_display_name");
         const isNewFormat = headers.includes("tc_bulletin_number") || headers.includes("typhoon_name");
         
         // Parse data rows
@@ -455,7 +456,7 @@ export default function Dashboard() {
           }
           values.push(currentValue.trim());
           
-          if (values.length < headers.length - 2) continue; // Allow some flexibility
+          if (values.length < headers.length - 2) continue;
 
           const point = {};
           headers.forEach((header, index) => {
@@ -470,6 +471,92 @@ export default function Dashboard() {
               point[header] = value.toLowerCase() === "true";
             } else if (header === "tc_bulletin_number") {
               point[header] = value ? parseInt(value) : "";
+            } else {
+              // Remove surrounding quotes if present
+              point[header] = value.replace(/^"(.*)"$/, '$1').replace(/""/g, '"');
+            }
+          });
+
+          // Ensure backward compatibility
+          if (isNewFormat) {
+            point.lat = point.coordinate_latitude || point.lat || 0;
+            point.lon = point.coordinate_longitude || point.lon || 0;
+            point.category = point.typhoon_category || point.category || "tropical-storm";
+          } else {
+            point.coordinate_latitude = point.lat;
+            point.coordinate_longitude = point.lon;
+            point.typhoon_category = point.category;
+          }
+
+          newPoints.push(point);
+        }
+
+        if (newPoints.length === 0) {
+          throw new Error("No valid data found in CSV file");
+        }
+
+        if (isMultiTyphoonFormat) {
+          // Group points by typhoon_id
+          const typhoonGroups = {};
+          newPoints.forEach(point => {
+            const typhoonId = point.typhoon_id || 'unnamed';
+            if (!typhoonGroups[typhoonId]) {
+              typhoonGroups[typhoonId] = {
+                id: typhoonId === 'unnamed' ? `typhoon_${Date.now()}` : typhoonId,
+                name: point.typhoon_display_name || 'Unnamed Typhoon',
+                trackingPoints: [],
+                color: TYPHOON_COLORS[Object.keys(typhoonGroups).length % TYPHOON_COLORS.length],
+                isActive: true,
+                createdAt: Date.now()
+              };
+            }
+            // Remove typhoon metadata from point
+            const { typhoon_id, typhoon_display_name, ...cleanPoint } = point;
+            typhoonGroups[typhoonId].trackingPoints.push(cleanPoint);
+          });
+          
+          const importedTyphoons = Object.values(typhoonGroups);
+          setTyphoons(importedTyphoons);
+          setSelectedTyphoonId('all');
+          
+          toast.success(`Successfully imported ${importedTyphoons.length} typhoons with ${newPoints.length} total tracking points`);
+        } else {
+          // Import as single typhoon
+          const typhoonName = newPoints[0]?.typhoon_name || 'Imported Typhoon';
+          const newTyphoon = {
+            id: `typhoon_${Date.now()}`,
+            name: typhoonName,
+            trackingPoints: newPoints,
+            color: TYPHOON_COLORS[typhoons.length % TYPHOON_COLORS.length],
+            isActive: true,
+            createdAt: Date.now()
+          };
+          
+          setTyphoons((prev) => [...prev, newTyphoon]);
+          setSelectedTyphoonId(newTyphoon.id);
+          
+          toast.success(`Successfully imported typhoon "${typhoonName}" with ${newPoints.length} tracking points`);
+        }
+        
+        // Reset to first page
+        setCurrentPage(1);
+      } catch (error) {
+        console.error("Import error:", error);
+        toast.error(error.message || "Failed to import CSV file");
+      }
+    };
+
+    reader.onerror = () => {
+      toast.error("Failed to read CSV file");
+    };
+
+    reader.readAsText(file);
+    
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }, [typhoons.length]);
             } else {
               // Remove surrounding quotes if present
               point[header] = value.replace(/^"(.*)"$/, '$1').replace(/""/g, '"');
