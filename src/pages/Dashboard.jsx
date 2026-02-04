@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useMemo } from "react";
 import { DashboardHeader } from "../components/dashboard/DashboardHeader";
 import { SatelliteMap } from "../components/dashboard/SatelliteMap";
 import { TrackingMap } from "../components/dashboard/TrackingMap";
@@ -7,7 +7,20 @@ import { TrackHistoryTable } from "../components/dashboard/TrackHistoryTable";
 import { NavigationControls } from "../components/dashboard/NavigationControls";
 import { AddTrackingPointDialog } from "../components/dashboard/AddTrackingPointDialog";
 import { ManageTrackingDialog } from "../components/dashboard/ManageTrackingDialog";
+import { TyphoonSelector } from "../components/dashboard/TyphoonSelector";
 import { toast } from "sonner";
+
+// Typhoon color palette for visual distinction
+const TYPHOON_COLORS = [
+  { primary: "#EF4444", light: "#FCA5A5", name: "Red" },      // Red
+  { primary: "#3B82F6", light: "#93C5FD", name: "Blue" },     // Blue
+  { primary: "#10B981", light: "#6EE7B7", name: "Green" },    // Green
+  { primary: "#8B5CF6", light: "#C4B5FD", name: "Purple" },   // Purple
+  { primary: "#F97316", light: "#FDBA74", name: "Orange" },   // Orange
+  { primary: "#EC4899", light: "#F9A8D4", name: "Pink" },     // Pink
+  { primary: "#06B6D4", light: "#67E8F9", name: "Cyan" },     // Cyan
+  { primary: "#EAB308", light: "#FDE047", name: "Yellow" },   // Yellow
+];
 
 // Initial typhoon data - empty for fresh start
 const initialTyphoonData = {
@@ -23,15 +36,35 @@ const initialTyphoonData = {
   centralPressure: "N/A",
 };
 
-// Initial tracking points - empty for fresh start
-const initialTrackingPoints = [];
+// Initial typhoons array - empty for fresh start
+const initialTyphoons = [];
 
 export default function Dashboard() {
-  const [trackingPoints, setTrackingPoints] = useState(initialTrackingPoints);
+  const [typhoons, setTyphoons] = useState(initialTyphoons);
+  const [selectedTyphoonId, setSelectedTyphoonId] = useState(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isManageDialogOpen, setIsManageDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const fileInputRef = useRef(null);
+  
+  // Get selected typhoon or create a virtual "All" view
+  const selectedTyphoon = useMemo(() => {
+    if (selectedTyphoonId === 'all') {
+      // Return virtual typhoon representing all typhoons
+      const allPoints = typhoons.flatMap(t => t.trackingPoints);
+      return {
+        id: 'all',
+        name: 'All Typhoons',
+        trackingPoints: allPoints,
+        color: TYPHOON_COLORS[0],
+        isActive: true
+      };
+    }
+    return typhoons.find(t => t.id === selectedTyphoonId) || null;
+  }, [selectedTyphoonId, typhoons]);
+
+  // Get all tracking points from selected typhoon
+  const trackingPoints = selectedTyphoon?.trackingPoints || [];
   
   // Pagination settings
   const itemsPerPage = 3;
@@ -43,7 +76,7 @@ export default function Dashboard() {
         bulletinNumber: trackingPoints[trackingPoints.length - 1].tc_bulletin_number || trackingPoints.length,
         timestamp: trackingPoints[trackingPoints.length - 1].as_of_time || "N/A",
         date: trackingPoints[trackingPoints.length - 1].as_of_date || "N/A",
-        name: trackingPoints[trackingPoints.length - 1].typhoon_name || "N/A",
+        name: trackingPoints[trackingPoints.length - 1].typhoon_name || selectedTyphoon?.name || "N/A",
         category: trackingPoints[trackingPoints.length - 1].typhoon_category || trackingPoints[trackingPoints.length - 1].category || "N/A",
         location: trackingPoints[trackingPoints.length - 1].typhoon_location || "N/A",
         coordinates: {
