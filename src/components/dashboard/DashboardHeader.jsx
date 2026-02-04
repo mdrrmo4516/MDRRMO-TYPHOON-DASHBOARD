@@ -1,4 +1,4 @@
-import { Cloud, RefreshCw, Download, Upload, MapPin, List, Menu } from "lucide-react";
+import { Cloud, RefreshCw, Download, Upload, MapPin, List, Menu, Printer, Image } from "lucide-react";
 import { Button } from "../ui/button";
 import {
   DropdownMenu,
@@ -14,6 +14,7 @@ export function DashboardHeader({
   onImportCSV, 
   onAddPoint, 
   onManagePoints,
+  onPrintReport,
   trackingPointsCount = 0 
 }) {
   return (
