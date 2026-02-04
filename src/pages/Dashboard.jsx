@@ -45,6 +45,7 @@ export default function Dashboard() {
   const [selectedTyphoonId, setSelectedTyphoonId] = useState(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isManageDialogOpen, setIsManageDialogOpen] = useState(false);
+  const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const fileInputRef = useRef(null);
   
