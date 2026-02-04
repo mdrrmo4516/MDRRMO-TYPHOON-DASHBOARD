@@ -174,7 +174,7 @@ export function TrackingMap({ typhoons = [], selectedTyphoonId, onAddPoint }) {
           </CardTitle>
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="border-secondary text-secondary text-xs">
-              {trackingPoints.length} Points
+              {allTrackingPoints.length} Points ({visibleTyphoons.length} Typhoons)
             </Badge>
             <Button
               variant="ghost"
