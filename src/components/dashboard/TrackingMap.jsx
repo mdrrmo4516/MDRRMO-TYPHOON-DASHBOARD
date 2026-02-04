@@ -107,15 +107,23 @@ function FitBounds({ trackingPoints }) {
   return null;
 }
 
-export function TrackingMap({ trackingPoints = [], onAddPoint }) {
+export function TrackingMap({ typhoons = [], selectedTyphoonId, onAddPoint }) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const cardRef = useRef(null);
   
-  // Calculate center based on tracking points, or use Philippines center as default
-  const center = trackingPoints.length > 0 
+  // Get visible typhoons (only active ones)
+  const visibleTyphoons = typhoons.filter(t => t.isActive);
+  
+  // Get all tracking points from visible typhoons
+  const allTrackingPoints = visibleTyphoons.flatMap(t => 
+    t.trackingPoints.map(p => ({ ...p, typhoonColor: t.color, typhoonName: t.name }))
+  );
+  
+  // Calculate center based on all tracking points, or use Philippines center as default
+  const center = allTrackingPoints.length > 0 
     ? [
-        trackingPoints.reduce((sum, p) => sum + (p.coordinate_latitude || p.lat || 0), 0) / trackingPoints.length,
-        trackingPoints.reduce((sum, p) => sum + (p.coordinate_longitude || p.lon || 0), 0) / trackingPoints.length
+        allTrackingPoints.reduce((sum, p) => sum + (p.coordinate_latitude || p.lat || 0), 0) / allTrackingPoints.length,
+        allTrackingPoints.reduce((sum, p) => sum + (p.coordinate_longitude || p.lon || 0), 0) / allTrackingPoints.length
       ]
     : [12.8797, 121.7740];
   const zoom = 6;
