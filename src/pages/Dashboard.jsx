@@ -574,6 +574,7 @@ export default function Dashboard() {
         onImportCSV={handleImportClick}
         onAddPoint={() => setIsAddDialogOpen(true)}
         onManagePoints={() => setIsManageDialogOpen(true)}
+        onPrintReport={() => setIsReportDialogOpen(true)}
         trackingPointsCount={totalTrackingPoints}
       />
 
