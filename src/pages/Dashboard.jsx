@@ -8,6 +8,7 @@ import { NavigationControls } from "../components/dashboard/NavigationControls";
 import { AddTrackingPointDialog } from "../components/dashboard/AddTrackingPointDialog";
 import { ManageTrackingDialog } from "../components/dashboard/ManageTrackingDialog";
 import { TyphoonSelector } from "../components/dashboard/TyphoonSelector";
+import { ReportExportDialog } from "../components/dashboard/ReportExportDialog";
 import { toast } from "sonner";
 
 // Typhoon color palette for visual distinction
