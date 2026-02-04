@@ -155,15 +155,6 @@ export function TrackingMap({ typhoons = [], selectedTyphoonId, onAddPoint }) {
     };
   }, []);
 
-  // Create polyline coordinates from tracking points
-  const polylinePositions = trackingPoints
-    .map(point => {
-      const lat = point.coordinate_latitude || point.lat;
-      const lon = point.coordinate_longitude || point.lon;
-      return lat && lon && !isNaN(lat) && !isNaN(lon) ? [lat, lon] : null;
-    })
-    .filter(pos => pos !== null);
-
   return (
     <Card ref={cardRef} className="dashboard-panel h-full">
       <CardHeader className="pb-2">
