@@ -665,6 +665,15 @@ export default function Dashboard() {
         onDelete={handleDeleteTrackingPoint}
         onUpdate={handleUpdateTrackingPoint}
       />
+
+      <ReportExportDialog
+        open={isReportDialogOpen}
+        onOpenChange={setIsReportDialogOpen}
+        typhoonData={typhoonData}
+        trackingPoints={trackingPoints}
+        typhoonName={selectedTyphoon?.name}
+        typhoonColor={selectedTyphoon?.color}
+      />
     </div>
   );
 }
