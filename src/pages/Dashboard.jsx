@@ -184,17 +184,51 @@ export default function Dashboard() {
 
   // Delete tracking point
   const handleDeleteTrackingPoint = useCallback((id) => {
-    setTrackingPoints((prev) => prev.filter((p) => p.id !== id));
+    if (!selectedTyphoonId || selectedTyphoonId === 'all') {
+      // Delete from all typhoons
+      setTyphoons((prev) =>
+        prev.map((t) => ({
+          ...t,
+          trackingPoints: t.trackingPoints.filter((p) => p.id !== id)
+        }))
+      );
+    } else {
+      setTyphoons((prev) =>
+        prev.map((t) =>
+          t.id === selectedTyphoonId
+            ? { ...t, trackingPoints: t.trackingPoints.filter((p) => p.id !== id) }
+            : t
+        )
+      );
+    }
     toast.success("Tracking point removed");
-  }, []);
+  }, [selectedTyphoonId]);
 
   // Update tracking point
   const handleUpdateTrackingPoint = useCallback((id, updates) => {
-    setTrackingPoints((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, ...updates } : p))
-    );
+    if (!selectedTyphoonId || selectedTyphoonId === 'all') {
+      // Update in all typhoons
+      setTyphoons((prev) =>
+        prev.map((t) => ({
+          ...t,
+          trackingPoints: t.trackingPoints.map((p) => 
+            p.id === id ? { ...p, ...updates } : p
+          )
+        }))
+      );
+    } else {
+      setTyphoons((prev) =>
+        prev.map((t) =>
+          t.id === selectedTyphoonId
+            ? { ...t, trackingPoints: t.trackingPoints.map((p) => 
+                p.id === id ? { ...p, ...updates } : p
+              )}
+            : t
+        )
+      );
+    }
     toast.success("Tracking point updated");
-  }, []);
+  }, [selectedTyphoonId]);
 
   // Navigation handlers for pagination
   const handlePrevious = useCallback(() => {
