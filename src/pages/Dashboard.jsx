@@ -97,18 +97,90 @@ export default function Dashboard() {
   const endIndex = startIndex + itemsPerPage;
   const paginatedTrackingPoints = trackingPoints.slice(startIndex, endIndex);
 
+  // Create new typhoon
+  const handleCreateTyphoon = useCallback((typhoonName) => {
+    const newTyphoon = {
+      id: `typhoon_${Date.now()}`,
+      name: typhoonName,
+      trackingPoints: [],
+      color: TYPHOON_COLORS[typhoons.length % TYPHOON_COLORS.length],
+      isActive: true,
+      createdAt: Date.now()
+    };
+    
+    setTyphoons((prev) => [...prev, newTyphoon]);
+    setSelectedTyphoonId(newTyphoon.id);
+    toast.success(`Typhoon "${typhoonName}" created`);
+    return newTyphoon.id;
+  }, [typhoons.length]);
+
+  // Delete typhoon
+  const handleDeleteTyphoon = useCallback((typhoonId) => {
+    const typhoon = typhoons.find(t => t.id === typhoonId);
+    if (!typhoon) return;
+    
+    setTyphoons((prev) => prev.filter(t => t.id !== typhoonId));
+    
+    // If deleted typhoon was selected, switch to 'all' or first typhoon
+    if (selectedTyphoonId === typhoonId) {
+      if (typhoons.length > 1) {
+        setSelectedTyphoonId('all');
+      } else {
+        setSelectedTyphoonId(null);
+      }
+    }
+    
+    toast.success(`Typhoon "${typhoon.name}" deleted`);
+  }, [typhoons, selectedTyphoonId]);
+
+  // Toggle typhoon visibility
+  const handleToggleTyphoonVisibility = useCallback((typhoonId) => {
+    setTyphoons((prev) =>
+      prev.map((t) =>
+        t.id === typhoonId ? { ...t, isActive: !t.isActive } : t
+      )
+    );
+  }, []);
+
   // Add new tracking point
-  const handleAddTrackingPoint = useCallback((newPoint) => {
+  const handleAddTrackingPoint = useCallback((newPoint, targetTyphoonId = null) => {
     const point = {
       ...newPoint,
       id: Date.now(),
     };
-    setTrackingPoints((prev) => [...prev, point]);
+    
+    const typhoonId = targetTyphoonId || selectedTyphoonId;
+    
+    // If no typhoon exists or selected, create a new one
+    if (!typhoonId || typhoonId === 'all') {
+      const typhoonName = newPoint.typhoon_name || 'Unnamed Typhoon';
+      const newTyphoonId = handleCreateTyphoon(typhoonName);
+      
+      setTyphoons((prev) =>
+        prev.map((t) =>
+          t.id === newTyphoonId
+            ? { ...t, trackingPoints: [...t.trackingPoints, point] }
+            : t
+        )
+      );
+    } else {
+      setTyphoons((prev) =>
+        prev.map((t) =>
+          t.id === typhoonId
+            ? { ...t, trackingPoints: [...t.trackingPoints, point] }
+            : t
+        )
+      );
+    }
+    
     // Navigate to the last page to show the new point
-    const newTotalPages = Math.ceil((trackingPoints.length + 1) / itemsPerPage);
+    const currentTyphoon = typhoons.find(t => t.id === typhoonId);
+    const newLength = (currentTyphoon?.trackingPoints.length || 0) + 1;
+    const newTotalPages = Math.ceil(newLength / itemsPerPage);
     setCurrentPage(newTotalPages);
+    
     toast.success("Tracking point added successfully");
-  }, [trackingPoints.length]);
+  }, [selectedTyphoonId, typhoons, handleCreateTyphoon]);
 
   // Delete tracking point
   const handleDeleteTrackingPoint = useCallback((id) => {
