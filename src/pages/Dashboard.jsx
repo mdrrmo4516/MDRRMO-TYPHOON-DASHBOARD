@@ -253,6 +253,11 @@ export default function Dashboard() {
     toast.success("Data refreshed - showing latest bulletin");
   }, [trackingPoints.length]);
 
+  // Get total count of all tracking points across all typhoons
+  const totalTrackingPoints = useMemo(() => {
+    return typhoons.reduce((sum, t) => sum + t.trackingPoints.length, 0);
+  }, [typhoons]);
+
   // Export tracking points to CSV
   const handleExportCSV = useCallback(() => {
     try {
