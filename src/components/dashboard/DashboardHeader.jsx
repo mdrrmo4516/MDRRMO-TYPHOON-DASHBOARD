@@ -78,6 +78,18 @@ export function DashboardHeader({
             <DropdownMenuSeparator className="bg-secondary/30" />
             
             <DropdownMenuItem 
+              onClick={onPrintReport}
+              disabled={trackingPointsCount === 0}
+              className="cursor-pointer"
+              data-testid="print-report-menu-item"
+            >
+              <Printer className="w-4 h-4 mr-2" />
+              <span>Print/Export Report</span>
+            </DropdownMenuItem>
+            
+            <DropdownMenuSeparator className="bg-secondary/30" />
+            
+            <DropdownMenuItem 
               onClick={onAddPoint}
               className="cursor-pointer"
               data-testid="add-point-menu-item"
