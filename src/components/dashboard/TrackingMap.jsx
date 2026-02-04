@@ -341,8 +341,33 @@ export function TrackingMap({ typhoons = [], selectedTyphoonId, onAddPoint }) {
           </MapContainer>
           
           {/* Tracking Legend Overlay */}
-          <div className="absolute top-2 right-2 z-[10]">
+          <div className="absolute top-2 right-2 z-[10] space-y-2">
             <TrackingLegend />
+            
+            {/* Typhoon Color Legend */}
+            {visibleTyphoons.length > 0 && (
+              <Card className="bg-card/95 backdrop-blur-sm border-secondary/50 shadow-lg">
+                <div className="p-2">
+                  <h4 className="text-xs font-semibold text-secondary mb-2">Typhoon Tracks</h4>
+                  <div className="space-y-1">
+                    {visibleTyphoons.map((typhoon) => (
+                      <div key={typhoon.id} className="flex items-center gap-2">
+                        <div 
+                          className="w-4 h-1 rounded"
+                          style={{ backgroundColor: typhoon.color.primary }}
+                        />
+                        <span className="text-[10px] text-foreground/80 max-w-[100px] truncate">
+                          {typhoon.name}
+                        </span>
+                        <span className="text-[9px] text-muted-foreground">
+                          ({typhoon.trackingPoints.length})
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </Card>
+            )}
           </div>
         </div>
 
