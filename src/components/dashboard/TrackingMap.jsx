@@ -221,99 +221,129 @@ export function TrackingMap({ typhoons = [], selectedTyphoonId, onAddPoint }) {
             <KMLLayer />
             
             {/* Auto-fit bounds to show all tracking points */}
-            <FitBounds trackingPoints={trackingPoints} />
+            <FitBounds trackingPoints={allTrackingPoints} />
             
-            {/* Polyline connecting tracking points */}
-            {polylinePositions.length > 1 && (
-              <Polyline
-                positions={polylinePositions}
-                color="#000000"
-                weight={3}
-                opacity={0.8}
-              />
-            )}
-            
-            {/* Tracking Point Markers */}
-            {trackingPoints.map((point, index) => {
-              const isCurrent = point.current || false;
-              const category = point.typhoon_category || point.category || "tropical-storm";
-              const lat = point.coordinate_latitude || point.lat;
-              const lon = point.coordinate_longitude || point.lon;
-              
-              // Skip if coordinates are invalid
-              if (!lat || !lon || isNaN(lat) || isNaN(lon)) {
-                console.warn(`Skipping point ${point.id}: invalid coordinates`, { lat, lon });
-                return null;
-              }
-              
-              const icon = createLeafletIcon(category, isCurrent);
-              
+            {/* Render each typhoon's track */}
+            {visibleTyphoons.map((typhoon) => {
+              // Create polyline coordinates from this typhoon's tracking points
+              const polylinePositions = typhoon.trackingPoints
+                .map(point => {
+                  const lat = point.coordinate_latitude || point.lat;
+                  const lon = point.coordinate_longitude || point.lon;
+                  return lat && lon && !isNaN(lat) && !isNaN(lon) ? [lat, lon] : null;
+                })
+                .filter(pos => pos !== null);
+
               return (
-                <React.Fragment key={point.id}>
-                  {/* Add pulsing circle for current position */}
-                  {isCurrent && (
-                    <CircleMarker
-                      center={[lat, lon]}
-                      radius={20}
-                      pathOptions={{
-                        color: '#FFCC00',
-                        fillColor: '#FFCC00',
-                        fillOpacity: 0.3,
-                        weight: 3,
-                        opacity: 0.8,
-                        className: 'current-position-circle'
-                      }}
+                <React.Fragment key={typhoon.id}>
+                  {/* Polyline connecting tracking points for this typhoon */}
+                  {polylinePositions.length > 1 && (
+                    <Polyline
+                      positions={polylinePositions}
+                      color={typhoon.color.primary}
+                      weight={4}
+                      opacity={0.8}
+                      dashArray={selectedTyphoonId === typhoon.id ? null : "5, 10"}
                     />
                   )}
                   
-                  <Marker
-                    position={[lat, lon]}
-                    icon={icon}
-                    title={`Point ${index + 1}${isCurrent ? ' (Current)' : ''}: ${category}`}
-                    zIndexOffset={isCurrent ? 1000 : index * 10}
-                  >
-                    <Popup>
-                      <div className="min-w-[200px] p-2">
-                        <h3 className="font-bold text-base mb-2 text-secondary border-b pb-1">
-                          {point.typhoon_name || 'N/A'} {isCurrent && '(Current)'}
-                        </h3>
-                        <div className="space-y-1 text-sm">
-                          <div className="flex justify-between">
-                            <span className="font-semibold">Bulletin #:</span>
-                            <span>{point.tc_bulletin_number || index + 1}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="font-semibold">As of Time:</span>
-                            <span>{point.as_of_time || 'N/A'}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="font-semibold">As of Date:</span>
-                            <span>{point.as_of_date || 'N/A'}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="font-semibold">Latitude:</span>
-                            <span>{lat}°N</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="font-semibold">Longitude:</span>
-                            <span>{lon}°E</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="font-semibold">Direction:</span>
-                            <span>{point.typhoon_movement || 'N/A'}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="font-semibold">Category:</span>
-                            <span className="capitalize">
-                              {(point.typhoon_category || point.category || 'N/A')
-                                .split('-')
-                                .join(' ')}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </Popup>
-                  </Marker>
+                  {/* Tracking Point Markers for this typhoon */}
+                  {typhoon.trackingPoints.map((point, index) => {
+                    const isCurrent = point.current || false;
+                    const category = point.typhoon_category || point.category || "tropical-storm";
+                    const lat = point.coordinate_latitude || point.lat;
+                    const lon = point.coordinate_longitude || point.lon;
+                    
+                    // Skip if coordinates are invalid
+                    if (!lat || !lon || isNaN(lat) || isNaN(lon)) {
+                      return null;
+                    }
+                    
+                    const icon = createLeafletIcon(category, isCurrent);
+                    
+                    return (
+                      <React.Fragment key={point.id}>
+                        {/* Add pulsing circle for current position */}
+                        {isCurrent && (
+                          <CircleMarker
+                            center={[lat, lon]}
+                            radius={20}
+                            pathOptions={{
+                              color: typhoon.color.primary,
+                              fillColor: typhoon.color.primary,
+                              fillOpacity: 0.3,
+                              weight: 3,
+                              opacity: 0.8,
+                            }}
+                          />
+                        )}
+                        
+                        {/* Add colored circle behind marker */}
+                        <CircleMarker
+                          center={[lat, lon]}
+                          radius={8}
+                          pathOptions={{
+                            color: typhoon.color.primary,
+                            fillColor: typhoon.color.light,
+                            fillOpacity: 0.6,
+                            weight: 2,
+                          }}
+                        />
+                        
+                        <Marker
+                          position={[lat, lon]}
+                          icon={icon}
+                          title={`${typhoon.name} - Point ${index + 1}${isCurrent ? ' (Current)' : ''}`}
+                          zIndexOffset={isCurrent ? 1000 : index * 10}
+                        >
+                          <Popup>
+                            <div className="min-w-[200px] p-2">
+                              <h3 
+                                className="font-bold text-base mb-2 border-b pb-1"
+                                style={{ color: typhoon.color.primary }}
+                              >
+                                {typhoon.name} {isCurrent && '(Current)'}
+                              </h3>
+                              <div className="space-y-1 text-sm">
+                                <div className="flex justify-between">
+                                  <span className="font-semibold">Bulletin #:</span>
+                                  <span>{point.tc_bulletin_number || index + 1}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="font-semibold">As of Time:</span>
+                                  <span>{point.as_of_time || 'N/A'}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="font-semibold">As of Date:</span>
+                                  <span>{point.as_of_date || 'N/A'}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="font-semibold">Latitude:</span>
+                                  <span>{lat}°N</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="font-semibold">Longitude:</span>
+                                  <span>{lon}°E</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="font-semibold">Direction:</span>
+                                  <span>{point.typhoon_movement || 'N/A'}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="font-semibold">Category:</span>
+                                  <span className="capitalize">
+                                    {(point.typhoon_category || point.category || 'N/A')
+                                      .split('-')
+                                      .join(' ')}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </Popup>
+                        </Marker>
+                      </React.Fragment>
+                    );
+                  })}
                 </React.Fragment>
               );
             })}
