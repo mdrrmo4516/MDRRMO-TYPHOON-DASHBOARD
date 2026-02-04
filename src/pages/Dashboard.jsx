@@ -623,7 +623,7 @@ export default function Dashboard() {
         onImportCSV={handleImportClick}
         onAddPoint={() => setIsAddDialogOpen(true)}
         onManagePoints={() => setIsManageDialogOpen(true)}
-        trackingPointsCount={trackingPoints.length}
+        trackingPointsCount={totalTrackingPoints}
       />
 
       {/* Hidden File Input for CSV Import */}
@@ -635,6 +635,20 @@ export default function Dashboard() {
         style={{ display: "none" }}
       />
 
+      {/* Typhoon Selector */}
+      {typhoons.length > 0 && (
+        <div className="mb-4 px-2">
+          <TyphoonSelector
+            typhoons={typhoons}
+            selectedTyphoonId={selectedTyphoonId}
+            onSelectTyphoon={setSelectedTyphoonId}
+            onCreateTyphoon={handleCreateTyphoon}
+            onDeleteTyphoon={handleDeleteTyphoon}
+            onToggleVisibility={handleToggleTyphoonVisibility}
+          />
+        </div>
+      )}
+
       {/* Main Dashboard Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 px-2">
         {/* Left Column - Satellite Map */}
@@ -645,14 +659,19 @@ export default function Dashboard() {
         {/* Middle Column - Tracking Map */}
         <div className="lg:col-span-5">
           <TrackingMap
-            trackingPoints={trackingPoints}
+            typhoons={typhoons}
+            selectedTyphoonId={selectedTyphoonId}
             onAddPoint={() => setIsAddDialogOpen(true)}
           />
         </div>
 
         {/* Right Column - Info Panel */}
         <div className="lg:col-span-3">
-          <TyphoonInfoPanel data={typhoonData} />
+          <TyphoonInfoPanel 
+            data={typhoonData}
+            typhoonName={selectedTyphoon?.name}
+            typhoonColor={selectedTyphoon?.color}
+          />
         </div>
       </div>
 
@@ -663,6 +682,8 @@ export default function Dashboard() {
           currentPage={currentPage}
           totalPages={totalPages}
           totalPoints={trackingPoints.length}
+          typhoonName={selectedTyphoon?.name}
+          typhoonColor={selectedTyphoon?.color}
         />
       </div>
 
@@ -681,6 +702,8 @@ export default function Dashboard() {
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
         onAdd={handleAddTrackingPoint}
+        typhoons={typhoons}
+        selectedTyphoonId={selectedTyphoonId}
       />
 
       <ManageTrackingDialog
