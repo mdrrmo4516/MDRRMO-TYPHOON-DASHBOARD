@@ -261,65 +261,143 @@ export default function Dashboard() {
   // Export tracking points to CSV
   const handleExportCSV = useCallback(() => {
     try {
-      // Create CSV header with all fields
-      const headers = [
-        "id",
-        "tc_bulletin_number",
-        "as_of_time",
-        "as_of_date",
-        "typhoon_name",
-        "typhoon_category",
-        "typhoon_location",
-        "coordinate_latitude",
-        "coordinate_longitude",
-        "typhoon_movement",
-        "wind_speed",
-        "central_pressure",
-        "current"
-      ];
-      
-      // Create CSV rows
-      const rows = trackingPoints.map((point) => [
-        point.id,
-        point.tc_bulletin_number || "",
-        point.as_of_time || "",
-        point.as_of_date || "",
-        point.typhoon_name || "",
-        point.typhoon_category || point.category || "",
-        `"${(point.typhoon_location || "").replace(/"/g, '""')}"`, // Escape quotes in location
-        point.coordinate_latitude || point.lat || "",
-        point.coordinate_longitude || point.lon || "",
-        `"${(point.typhoon_movement || "").replace(/"/g, '""')}"`,
-        point.wind_speed || "",
-        point.central_pressure || "",
-        point.current ? "true" : "false",
-      ]);
+      if (selectedTyphoonId === 'all') {
+        // Export all typhoons to separate CSV files or single combined file
+        const allPoints = typhoons.flatMap(t => 
+          t.trackingPoints.map(p => ({ ...p, typhoon_id: t.id, typhoon_display_name: t.name }))
+        );
+        
+        if (allPoints.length === 0) {
+          toast.warning("No tracking points to export");
+          return;
+        }
+        
+        // Create CSV header with typhoon info
+        const headers = [
+          "id",
+          "typhoon_id",
+          "typhoon_display_name",
+          "tc_bulletin_number",
+          "as_of_time",
+          "as_of_date",
+          "typhoon_name",
+          "typhoon_category",
+          "typhoon_location",
+          "coordinate_latitude",
+          "coordinate_longitude",
+          "typhoon_movement",
+          "wind_speed",
+          "central_pressure",
+          "current"
+        ];
+        
+        // Create CSV rows
+        const rows = allPoints.map((point) => [
+          point.id,
+          point.typhoon_id || "",
+          `"${(point.typhoon_display_name || "").replace(/"/g, '""')}"`,
+          point.tc_bulletin_number || "",
+          point.as_of_time || "",
+          point.as_of_date || "",
+          point.typhoon_name || "",
+          point.typhoon_category || point.category || "",
+          `"${(point.typhoon_location || "").replace(/"/g, '""')}"`,
+          point.coordinate_latitude || point.lat || "",
+          point.coordinate_longitude || point.lon || "",
+          `"${(point.typhoon_movement || "").replace(/"/g, '""')}"`,
+          point.wind_speed || "",
+          point.central_pressure || "",
+          point.current ? "true" : "false",
+        ]);
 
-      // Combine headers and rows
-      const csvContent = [
-        headers.join(","),
-        ...rows.map((row) => row.join(",")),
-      ].join("\n");
+        // Combine headers and rows
+        const csvContent = [
+          headers.join(","),
+          ...rows.map((row) => row.join(",")),
+        ].join("\n");
 
-      // Create blob and download
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-      const link = document.createElement("a");
-      const url = URL.createObjectURL(blob);
-      
-      link.setAttribute("href", url);
-      link.setAttribute("download", `typhoon_tracking_${Date.now()}.csv`);
-      link.style.visibility = "hidden";
-      
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      toast.success(`Exported ${trackingPoints.length} tracking points to CSV`);
+        // Create blob and download
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        
+        link.setAttribute("href", url);
+        link.setAttribute("download", `all_typhoons_tracking_${Date.now()}.csv`);
+        link.style.visibility = "hidden";
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        toast.success(`Exported ${allPoints.length} tracking points from ${typhoons.length} typhoons to CSV`);
+      } else {
+        // Export single typhoon
+        const typhoon = typhoons.find(t => t.id === selectedTyphoonId);
+        if (!typhoon || typhoon.trackingPoints.length === 0) {
+          toast.warning("No tracking points to export");
+          return;
+        }
+        
+        // Create CSV header
+        const headers = [
+          "id",
+          "tc_bulletin_number",
+          "as_of_time",
+          "as_of_date",
+          "typhoon_name",
+          "typhoon_category",
+          "typhoon_location",
+          "coordinate_latitude",
+          "coordinate_longitude",
+          "typhoon_movement",
+          "wind_speed",
+          "central_pressure",
+          "current"
+        ];
+        
+        // Create CSV rows
+        const rows = typhoon.trackingPoints.map((point) => [
+          point.id,
+          point.tc_bulletin_number || "",
+          point.as_of_time || "",
+          point.as_of_date || "",
+          point.typhoon_name || "",
+          point.typhoon_category || point.category || "",
+          `"${(point.typhoon_location || "").replace(/"/g, '""')}"`,
+          point.coordinate_latitude || point.lat || "",
+          point.coordinate_longitude || point.lon || "",
+          `"${(point.typhoon_movement || "").replace(/"/g, '""')}"`,
+          point.wind_speed || "",
+          point.central_pressure || "",
+          point.current ? "true" : "false",
+        ]);
+
+        // Combine headers and rows
+        const csvContent = [
+          headers.join(","),
+          ...rows.map((row) => row.join(",")),
+        ].join("\n");
+
+        // Create blob and download
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        
+        link.setAttribute("href", url);
+        link.setAttribute("download", `${typhoon.name.replace(/\s+/g, '_')}_tracking_${Date.now()}.csv`);
+        link.style.visibility = "hidden";
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        toast.success(`Exported ${typhoon.trackingPoints.length} tracking points to CSV`);
+      }
     } catch (error) {
       console.error("Export error:", error);
       toast.error("Failed to export CSV file");
     }
-  }, [trackingPoints]);
+  }, [selectedTyphoonId, typhoons]);
 
   // Import tracking points from CSV
   const handleImportCSV = useCallback((event) => {
